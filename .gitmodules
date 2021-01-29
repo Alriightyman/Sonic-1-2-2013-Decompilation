@@ -1,0 +1,9 @@
+[submodule "dependencies/windows/SDL2"]
+	path = dependencies/windows/SDL2
+	url = https://github.com/SDL-mirror/SDL.git
+[submodule "dependencies/windows/libogg"]
+	path = dependencies/windows/libogg
+	url = https://github.com/xiph/ogg.git
+[submodule "dependencies/windows/libvorbis"]
+	path = dependencies/windows/libvorbis
+	url = https://gitlab.xiph.org/xiph/vorbis.git

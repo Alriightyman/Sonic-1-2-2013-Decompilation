@@ -35,6 +35,8 @@ cmake/
 [Dd]ependencies/mac/*
 [Dd]ependencies/all/*
 ![Dd]ependencies/all/dependencies.txt
+*/[Dd]ata/*
+*/[Bb]yteCode/
 
 # UWP
 **/Generated Files
@@ -252,3 +254,10 @@ Ignored/
 
 # Compiled object files
 objects/
+Sonic12Decomp/SData.bin
+Sonic12Decomp/settings.ini
+Sonic12Decomp/Sonic12Decomp.vcxproj
+*.vcxproj
+*.vcxproj
+Sonic12Decomp/Sonic12Decomp.vcxproj
+Sonic12Decomp/UData.bin
