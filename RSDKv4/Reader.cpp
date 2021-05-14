@@ -25,9 +25,17 @@ FileIO *cFileHandle = nullptr;
 bool CheckRSDKFile(const char *filePath)
 {
     FileInfo info;
-
-    // CopyFilePath(filename, &rsdkName);
-    cFileHandle = fOpen(filePath, "rb");
+    
+    char filePathBuffer[0x100];
+    sprintf(filePathBuffer, "%s", filePath);
+#if RETRO_PLATFORM == RETRO_OSX
+    char pathBuf[0x100];
+    sprintf(pathBuf, "%s/%s", gamePath, filePathBuffer);
+    sprintf(filePathBuffer, "%s", pathBuf);
+#endif
+    
+    
+    cFileHandle = fOpen(filePathBuffer, "rb");
     if (cFileHandle) {
         byte signature[6] = { 'R', 'S', 'D', 'K', 'v', 'B' };
         byte buf          = 0;
@@ -39,7 +47,7 @@ bool CheckRSDKFile(const char *filePath)
 
         Engine.usingDataFile = true;
 
-        StrCopy(rsdkContainer.packNames[rsdkContainer.packCount], filePath);
+        StrCopy(rsdkContainer.packNames[rsdkContainer.packCount], filePathBuffer);
 
         ushort fileCount = 0;
         fRead(&fileCount, 2, 1, cFileHandle);
@@ -68,7 +76,7 @@ bool CheckRSDKFile(const char *filePath)
             Engine.usingBytecode = true;
             CloseFile();
         }
-        printLog("loaded datapack '%s'", filePath);
+        printLog("loaded datapack '%s'", filePathBuffer);
 
         rsdkContainer.packCount++;
         return true;
@@ -81,7 +89,7 @@ bool CheckRSDKFile(const char *filePath)
             Engine.usingBytecode = true;
             CloseFile();
         }
-        printLog("Couldn't load datapack '%s'", filePath);
+        printLog("Couldn't load datapack '%s'", filePathBuffer);
         return false;
     }
 }
@@ -125,15 +133,32 @@ bool LoadFile(const char *filePath, FileInfo *fileInfo)
     StrCopy(filePathBuf, filePath);
     bool forceFolder = false;
 #if RETRO_USE_MOD_LOADER
+    // Fixes ".ani" ".Ani" bug and any other case differences
+    char pathLower[0x100];
+    memset(pathLower, 0, sizeof(char) * 0x100);
+    for (int c = 0; c < strlen(filePathBuf); ++c) {
+        pathLower[c] = tolower(filePathBuf[c]);
+    }
+
+    bool addPath = true;
     for (int m = 0; m < modCount; ++m) {
         if (modList[m].active) {
-            std::map<std::string, std::string>::const_iterator iter = modList[m].fileMap.find(filePathBuf);
+            std::map<std::string, std::string>::const_iterator iter = modList[m].fileMap.find(pathLower);
             if (iter != modList[m].fileMap.cend()) {
                 StrCopy(filePathBuf, iter->second.c_str());
                 forceFolder = true;
+                addPath = false;
                 break;
             }
         }
+    }
+#endif
+    
+#if RETRO_PLATFORM == RETRO_OSX
+    if (addPath) {
+        char pathBuf[0x100];
+        sprintf(pathBuf, "%s/%s", gamePath, filePathBuf);
+        sprintf(filePathBuf, "%s", pathBuf);
     }
 #endif
 
@@ -143,7 +168,7 @@ bool LoadFile(const char *filePath, FileInfo *fileInfo)
 #else
     if (Engine.usingDataFile) {
 #endif
-        StringLowerCase(fileInfo->fileName, filePathBuf);
+        StringLowerCase(fileInfo->fileName, filePath);
         StrCopy(fileName, fileInfo->fileName);
         byte buffer[0x10];
         int len = StrLength(fileInfo->fileName);
@@ -361,13 +386,18 @@ void GetFileInfo(FileInfo *fileInfo)
     fileInfo->eNybbleSwap       = eNybbleSwap;
     fileInfo->useEncryption     = useEncryption;
     fileInfo->packID            = packID;
+    fileInfo->usingDataPack     = Engine.usingDataFile;
     memcpy(encryptionStringA, fileInfo->encryptionStringA, 0x10 * sizeof(byte));
     memcpy(encryptionStringB, fileInfo->encryptionStringB, 0x10 * sizeof(byte));
 }
 
 void SetFileInfo(FileInfo *fileInfo)
 {
+#if !RETRO_USE_ORIGINAL_CODE
+    if (fileInfo->usingDataPack) {
+#else
     if (Engine.usingDataFile) {
+#endif
         cFileHandle       = fOpen(rsdkContainer.packNames[fileInfo->packID], "rb");
         virtualFileOffset = fileInfo->virtualFileOffset;
         vFileSize         = fileInfo->vfileSize;
@@ -382,7 +412,8 @@ void SetFileInfo(FileInfo *fileInfo)
         eStringNo      = fileInfo->eStringNo;
         eNybbleSwap    = fileInfo->eNybbleSwap;
         useEncryption  = fileInfo->useEncryption;
-        packID         = fileInfo->packID;
+        packID                  = fileInfo->packID;
+        Engine.usingDataFile = fileInfo->usingDataPack;
 
         if (useEncryption) {
             GenerateELoadKeys(vFileSize, (vFileSize >> 1) + 1);
@@ -396,11 +427,14 @@ void SetFileInfo(FileInfo *fileInfo)
         readPos           = fileInfo->readPos;
         fSeek(cFileHandle, readPos, SEEK_SET);
         FillFileBuffer();
-        bufferPosition = fileInfo->bufferPosition;
-        eStringPosA    = 0;
-        eStringPosB    = 0;
-        eStringNo      = 0;
-        eNybbleSwap    = 0;
+        bufferPosition       = fileInfo->bufferPosition;
+        eStringPosA          = 0;
+        eStringPosB          = 0;
+        eStringNo            = 0;
+        eNybbleSwap          = 0;
+        useEncryption        = fileInfo->useEncryption;
+        packID               = fileInfo->packID;
+        Engine.usingDataFile = fileInfo->usingDataPack;
     }
 }
 
@@ -493,12 +527,21 @@ bool LoadFile2(const char *filePath, FileInfo *fileInfo)
     StrCopy(filePathBuf, filePath);
     bool forceFolder = false;
 #if RETRO_USE_MOD_LOADER
+    // Fixes ".ani" ".Ani" bug and any other case differences
+    char pathLower[0x100];
+    memset(pathLower, 0, sizeof(char) * 0x100);
+    for (int c = 0; c < strlen(filePathBuf); ++c) {
+        pathLower[c] = tolower(filePathBuf[c]);
+    }
+
+    bool addPath = true;
     for (int m = 0; m < modCount; ++m) {
         if (modList[m].active) {
-            std::map<std::string, std::string>::const_iterator iter = modList[m].fileMap.find(filePathBuf);
+            std::map<std::string, std::string>::const_iterator iter = modList[m].fileMap.find(pathLower);
             if (iter != modList[m].fileMap.cend()) {
                 StrCopy(filePathBuf, iter->second.c_str());
                 forceFolder = true;
+                addPath = false;
                 break;
             }
         }
@@ -506,6 +549,14 @@ bool LoadFile2(const char *filePath, FileInfo *fileInfo)
 #endif
 
     cFileHandle = NULL;
+    
+#if RETRO_PLATFORM == RETRO_OSX
+    if (addPath) {
+        char pathBuf[0x100];
+        sprintf(pathBuf, "%s/%s", gamePath, filePathBuf);
+        sprintf(filePathBuf, "%s", pathBuf);
+    }
+#endif
 
     MEM_ZEROP(fileInfo);
     if (CheckFileInfo(filePath) != -1 && !forceFolder) {

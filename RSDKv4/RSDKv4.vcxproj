@@ -448,6 +448,9 @@ copy /Y "$(VcpkgInstalledDir)$(VcpkgPlatformTarget)-$(VcpkgOSTarget)\bin\glew32.
   <ItemGroup>
     <ResourceCompile Include="RSDKv4.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="RSDKv4 Decomp Icon.ico" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

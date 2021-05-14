@@ -1009,11 +1009,11 @@ enum ScrFunc {
     FUNC_READSAVERAM,
     FUNC_WRITESAVERAM,
 #if RETRO_REV01
-    FUNC_LOADTEXTFONT
+    FUNC_LOADTEXTFONT,
 #endif
     FUNC_LOADTEXTFILE,
 #if RETRO_REV01
-    FUNC_DRAWTEXT
+    FUNC_DRAWTEXT,
 #endif
     FUNC_GETTEXTINFO,
     FUNC_GETVERSIONNUMBER,
@@ -1117,7 +1117,7 @@ void CheckStaticText(char *text)
         var       = &privateStaticVariables[privateStaticVarCount];
         cnt       = &privateStaticVarCount;
         textPos   = 12;
-        bool priv = true;
+        priv = true;
     }
     MEM_ZEROP(var);
 
@@ -3556,10 +3556,10 @@ void ProcessScript(int scriptCodePtr, int jumpTablePtr, byte scriptEvent)
                                     scriptEng.operands[1] -= scriptEng.operands[5] + scriptEng.operands[6];
                                 }
                                 else {
+                                    character += scriptEng.operands[0];
                                     spriteFrame = &scriptFrames[scriptInfo->frameListOffset + character];
                                     scriptEng.operands[1] -= (scriptEng.operands[6] + spriteFrame->width);
 
-                                    character += scriptEng.operands[0];
                                     DrawSprite(scriptEng.operands[1] + spriteFrame->pivotX, scriptEng.operands[2] + spriteFrame->pivotY,
                                                spriteFrame->width, spriteFrame->height, spriteFrame->sprX, spriteFrame->sprY,
                                                scriptInfo->spriteSheetID);
@@ -3585,8 +3585,8 @@ void ProcessScript(int scriptCodePtr, int jumpTablePtr, byte scriptEvent)
                                 scriptEng.operands[1] += scriptEng.operands[5] + scriptEng.operands[6];
                             }
                             else {
-                                spriteFrame = &scriptFrames[scriptInfo->frameListOffset + character];
                                 character += scriptEng.operands[0];
+                                spriteFrame = &scriptFrames[scriptInfo->frameListOffset + character];
                                 DrawSprite(scriptEng.operands[1] + spriteFrame->pivotX, scriptEng.operands[2] + spriteFrame->pivotY,
                                            spriteFrame->width, spriteFrame->height, spriteFrame->sprX, spriteFrame->sprY, scriptInfo->spriteSheetID);
                                 scriptEng.operands[1] += spriteFrame->width + scriptEng.operands[6];
@@ -3609,8 +3609,8 @@ void ProcessScript(int scriptCodePtr, int jumpTablePtr, byte scriptEvent)
                                     scriptEng.operands[1] += scriptEng.operands[5] + scriptEng.operands[6];
                                 }
                                 else {
-                                    spriteFrame = &scriptFrames[scriptInfo->frameListOffset + character];
                                     character += scriptEng.operands[0];
+                                    spriteFrame = &scriptFrames[scriptInfo->frameListOffset + character];
                                     DrawSprite(scriptEng.operands[1] + spriteFrame->pivotX, scriptEng.operands[2] + spriteFrame->pivotY,
                                                spriteFrame->width, spriteFrame->height, spriteFrame->sprX, spriteFrame->sprY,
                                                scriptInfo->spriteSheetID);
@@ -3637,8 +3637,8 @@ void ProcessScript(int scriptCodePtr, int jumpTablePtr, byte scriptEvent)
                                 scriptEng.operands[1] += scriptEng.operands[5] + scriptEng.operands[6];
                             }
                             else {
-                                spriteFrame = &scriptFrames[scriptInfo->frameListOffset + character];
                                 character += scriptEng.operands[0];
+                                spriteFrame = &scriptFrames[scriptInfo->frameListOffset + character];
                                 DrawSprite(scriptEng.operands[1] + spriteFrame->pivotX, scriptEng.operands[2] + spriteFrame->pivotY,
                                            spriteFrame->width, spriteFrame->height, spriteFrame->sprX, spriteFrame->sprY, scriptInfo->spriteSheetID);
                                 scriptEng.operands[1] += spriteFrame->width + scriptEng.operands[6];
@@ -3657,11 +3657,11 @@ void ProcessScript(int scriptCodePtr, int jumpTablePtr, byte scriptEvent)
                             if (character > '9' && character < 'f')
                                 character -= 'A';
                             if (character <= -1) {
-                                scriptEng.operands[1] = scriptEng.operands[1] + scriptEng.operands[5] + scriptEng.operands[6];
+                                scriptEng.operands[1] += scriptEng.operands[5] + scriptEng.operands[6];
                             }
                             else {
-                                spriteFrame = &scriptFrames[scriptInfo->frameListOffset + character];
                                 character += scriptEng.operands[0];
+                                spriteFrame = &scriptFrames[scriptInfo->frameListOffset + character];
                                 DrawSprite(scriptEng.operands[1] + spriteFrame->pivotX, scriptEng.operands[2] + spriteFrame->pivotY,
                                            spriteFrame->width, spriteFrame->height, spriteFrame->sprX, spriteFrame->sprY, scriptInfo->spriteSheetID);
                                 scriptEng.operands[1] += spriteFrame->width + scriptEng.operands[6];
@@ -4342,7 +4342,11 @@ void ProcessScript(int scriptCodePtr, int jumpTablePtr, byte scriptEvent)
             case FUNC_LOADTEXTFILE: {
                 opcodeSize     = 0;
                 TextMenu *menu = &gameMenu[scriptEng.operands[0]];
-                LoadTextFile(menu, scriptText);
+#if RETRO_REV01
+                LoadTextFile(menu, scriptText, scriptEng.operands[2] != 0);
+#else
+                LoadTextFile(menu, scriptText, false);
+#endif
                 break;
             }
             case FUNC_GETTEXTINFO: {
@@ -4404,11 +4408,11 @@ void ProcessScript(int scriptCodePtr, int jumpTablePtr, byte scriptEvent)
             }
             case FUNC_CALLNATIVEFUNCTION:
                 opcodeSize = 0;
-                if (scriptEng.operands[0] <= 0xFu)
+                if (scriptEng.operands[0] >= 0 && scriptEng.operands[0] <= 0xF)
                     nativeFunction[scriptEng.operands[0]](0x00, NULL);
                 break;
             case FUNC_CALLNATIVEFUNCTION2:
-                if (scriptEng.operands[0] <= 0xFu) {
+                if (scriptEng.operands[0] >= 0 && scriptEng.operands[0] <= 0xF) {
                     if (StrLength(scriptText)) {
                         nativeFunction[scriptEng.operands[0]](scriptEng.operands[2], scriptText);
                     }
@@ -4419,7 +4423,7 @@ void ProcessScript(int scriptCodePtr, int jumpTablePtr, byte scriptEvent)
                 }
                 break;
             case FUNC_CALLNATIVEFUNCTION4:
-                if (scriptEng.operands[0] <= 0xFu)
+                if (scriptEng.operands[0] >= 0 && scriptEng.operands[0] <= 0xF)
                     nativeFunction[scriptEng.operands[0]](scriptEng.operands[1],
                                                           reinterpret_cast<void *>(static_cast<intptr_t>(scriptEng.operands[2])));
                 break;

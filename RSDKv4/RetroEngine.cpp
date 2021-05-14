@@ -61,6 +61,7 @@ bool processEvents()
                 if (SDL_GetNumTouchFingers(SDL_GetTouchDevice(RETRO_TOUCH_DEVICE)) <= 0) { // Touch always takes priority over mouse
 #endif                                                                                     //! RETRO_USING_SDL2
                     SDL_GetMouseState(&touchX[0], &touchY[0]);
+
                     touchX[0] /= Engine.windowScale;
                     touchY[0] /= Engine.windowScale;
                     touches = 1;
@@ -72,6 +73,7 @@ bool processEvents()
 #if RETRO_USING_SDL2
                 if (SDL_GetNumTouchFingers(SDL_GetTouchDevice(RETRO_TOUCH_DEVICE)) <= 0) { // Touch always takes priority over mouse
 #endif                                                                                     //! RETRO_USING_SDL2
+
                     switch (Engine.sdlEvents.button.button) {
                         case SDL_BUTTON_LEFT: touchDown[0] = 1; break;
                     }
@@ -122,8 +124,29 @@ bool processEvents()
                 switch (Engine.sdlEvents.key.keysym.sym) {
                     default: break;
                     case SDLK_ESCAPE:
-                        if (Engine.devMenu)
+                        if (Engine.devMenu) {
+#if RETRO_USE_MOD_LOADER
+                            //hacky patch because people can escape
+                            if ((Engine.gameMode == ENGINE_STARTMENU && stageMode == STARTMENU_MODMENU)
+                                || (Engine.gameMode == ENGINE_DEVMENU && stageMode == DEVMENU_MODMENU)) {
+                                // Reload entire engine
+                                Engine.LoadGameConfig("Data/Game/GameConfig.bin");
+
+                                ReleaseStageSfx();
+                                ReleaseGlobalSfx();
+                                LoadGlobalSfx();
+
+                                forceUseScripts = false;
+                                for (int m = 0; m < modCount; ++m) {
+                                    if (modList[m].useScripts && modList[m].active)
+                                        forceUseScripts = true;
+                                }
+                                saveMods();
+                            }
+#endif
+
                             Engine.gameMode = ENGINE_INITDEVMENU;
+                        }
                         break;
                     case SDLK_F4:
                         Engine.isFullScreen ^= 1;
@@ -214,10 +237,12 @@ bool processEvents()
                         break;
 #else
                     case SDLK_F11:
+                    case SDLK_INSERT:
                         if (Engine.masterPaused)
                             Engine.frameStep = true;
                         break;
                     case SDLK_F12:
+                    case SDLK_PAUSE:
                         if (Engine.devMenu)
                             Engine.masterPaused ^= 1;
                         break;
@@ -260,6 +285,7 @@ void RetroEngine::Init()
 #if RETRO_USE_MOD_LOADER
     initMods();
 #endif
+    
     char dest[0x200];
 #if RETRO_PLATFORM == RETRO_UWP
     static char resourcePath[256] = { 0 };
@@ -630,6 +656,11 @@ bool RetroEngine::LoadGameConfig(const char *filePath)
     AddNativeFunction("ReceiveValue", ReceiveValue);
     AddNativeFunction("TransmitGlobal", TransmitGlobal);
     AddNativeFunction("ShowPromoPopup", ShowPromoPopup);
+
+#if !RETRO_USE_ORIGINAL_CODE
+    AddNativeFunction("ExitGame", ExitGame);
+    AddNativeFunction("OpenModMenu", OpenModMenu);
+#endif
 
     return loaded;
 }

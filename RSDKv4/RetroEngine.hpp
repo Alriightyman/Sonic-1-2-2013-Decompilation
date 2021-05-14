@@ -177,6 +177,7 @@ enum RetroStates {
     // Custom GameModes (required to make some features work)
     ENGINE_STARTMENU   = 0x80,
     ENGINE_CONNECT2PVS = 0x81,
+    ENGINE_INITMODMENU = 0x82,
 #endif
 };
 
@@ -206,7 +207,6 @@ enum RetroGameType {
 #elif RETRO_USING_SDL2
 #include <SDL2/SDL.h>
 #include <vorbis/vorbisfile.h>
-
 #else
 
 #endif
@@ -284,6 +284,10 @@ public:
     int fastForwardSpeed = 8;
     bool masterPaused    = false;
     bool frameStep       = false;
+    int dimTimer         = 0;
+    int dimLimit         = 0;
+    float dimPercent     = 1.0;
+    float dimMax         = 1.0;
 
     bool showPaletteOverlay = false;
     bool useHQModes         = true;

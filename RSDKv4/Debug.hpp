@@ -22,7 +22,7 @@ inline void printLog(const char *msg, ...)
         }
 
         char pathBuffer[0x100];
-#if RETRO_PLATFORM == RETRO_OSX || RETRO_PLATFORM == RETRO_UWP
+#if RETRO_PLATFORM == RETRO_UWP
         if (!usingCWD)
             sprintf(pathBuffer, "%s/log.txt", getResourcesPath());
         else
@@ -52,7 +52,7 @@ inline void printLog(const ushort *msg)
             printf("\n");
 
         char pathBuffer[0x100];
-#if RETRO_PLATFORM == RETRO_OSX || RETRO_PLATFORM == RETRO_UWP
+#if RETRO_PLATFORM == RETRO_UWP
         if (!usingCWD)
             sprintf(pathBuffer, "%s/log.txt", getResourcesPath());
         else
@@ -83,10 +83,13 @@ enum DevMenuMenus {
     DEVMENU_STAGELISTSEL,
     DEVMENU_STAGESEL,
     DEVMENU_SCRIPTERROR,
+#if !RETRO_USE_ORIGINAL_CODE
+    DEVMENU_MODMENU
+#endif
 };
 
 enum StartMenuMenus {
-    STARTMENU_MAIN = 5,
+    STARTMENU_MAIN = 6,
     STARTMENU_SAVESEL,
     STARTMENU_PLAYERSEL,
     STARTMENU_GAMEOPTS,
@@ -94,6 +97,9 @@ enum StartMenuMenus {
     STARTMENU_TACONFIRMSEL,
     STARTMENU_ACHIEVEMENTS,
     STARTMENU_LEADERBOARDS,
+#if RETRO_USE_MOD_LOADER
+    STARTMENU_MODMENU
+#endif
 };
 
 void initDevMenu();

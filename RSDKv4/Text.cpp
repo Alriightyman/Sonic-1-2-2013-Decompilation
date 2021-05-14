@@ -87,7 +87,7 @@ void LoadFontFile(const char *filePath)
 }
 #endif
 
-void LoadTextFile(TextMenu *menu, const char *filePath)
+void LoadTextFile(TextMenu *menu, const char *filePath, byte mapCode)
 {
     FileInfo info;
     byte fileBuffer = 0;
@@ -98,6 +98,7 @@ void LoadTextFile(TextMenu *menu, const char *filePath)
         menu->entrySize[menu->rowCount]  = 0;
 
 #if RETRO_REV01
+        bool flag = false;
         FileRead(&fileBuffer, 1);
         if (fileBuffer == 0xFF) {
             FileRead(&fileBuffer, 1);
@@ -243,8 +244,9 @@ void SetupTextMenu(TextMenu *menu, int rowCount)
 }
 void AddTextMenuEntry(TextMenu *menu, const char *text)
 {
-    menu->entryStart[menu->rowCount] = menu->textDataPos;
-    menu->entrySize[menu->rowCount]  = 0;
+    menu->entryStart[menu->rowCount]     = menu->textDataPos;
+    menu->entrySize[menu->rowCount]      = 0;
+    menu->entryHighlight[menu->rowCount] = false;
     int textLength                   = StrLength(text);
     for (int i = 0; i < textLength;) {
         if (text[i] != '\0') {
@@ -260,8 +262,9 @@ void AddTextMenuEntry(TextMenu *menu, const char *text)
 }
 void AddTextMenuEntryW(TextMenu *menu, const ushort *text)
 {
-    menu->entryStart[menu->rowCount] = menu->textDataPos;
-    menu->entrySize[menu->rowCount]  = 0;
+    menu->entryStart[menu->rowCount]     = menu->textDataPos;
+    menu->entrySize[menu->rowCount]      = 0;
+    menu->entryHighlight[menu->rowCount] = false;
     int textLength                   = StrLengthW(text);
     for (int i = 0; i < textLength;) {
         if (text[i] != '\0') {
@@ -278,7 +281,8 @@ void AddTextMenuEntryW(TextMenu *menu, const ushort *text)
 void SetTextMenuEntry(TextMenu *menu, const char *text, int rowID)
 {
     menu->entryStart[rowID] = menu->textDataPos;
-    menu->entrySize[rowID]  = 0;
+    menu->entrySize[rowID]               = 0;
+    menu->entryHighlight[menu->rowCount] = false;
     int textLength          = StrLength(text);
     for (int i = 0; i < textLength;) {
         if (text[i] != '\0') {
@@ -294,7 +298,8 @@ void SetTextMenuEntry(TextMenu *menu, const char *text, int rowID)
 void SetTextMenuEntryW(TextMenu *menu, const ushort *text, int rowID)
 {
     menu->entryStart[rowID] = menu->textDataPos;
-    menu->entrySize[rowID]  = 0;
+    menu->entrySize[rowID]               = 0;
+    menu->entryHighlight[menu->rowCount] = false;
     int textLength          = StrLengthW(text);
     for (int i = 0; i < textLength;) {
         if (text[i] != '\0') {
@@ -310,7 +315,8 @@ void SetTextMenuEntryW(TextMenu *menu, const ushort *text, int rowID)
 void EditTextMenuEntry(TextMenu *menu, const char *text, int rowID)
 {
     int entryPos             = menu->entryStart[rowID];
-    menu->entrySize[rowID] = 0;
+    menu->entrySize[rowID]               = 0;
+    menu->entryHighlight[menu->rowCount] = false;
     int textLength         = StrLength(text);
     for (int i = 0; i < textLength;) {
         if (text[i] != '\0') {
@@ -403,7 +409,7 @@ void LoadConfigListText(TextMenu *menu, int listNo)
 
         // Categories
         for (byte c = 1; c <= 4; ++c) {
-            int stageCnt = 0;
+            byte stageCnt = 0;
             FileRead(&stageCnt, 1);
             for (byte s = 0; s < stageCnt; ++s) {
                 //Stage Folder

@@ -281,6 +281,19 @@ int InitRenderDevice()
 void FlipScreen()
 {
 #if !RETRO_USE_ORIGINAL_CODE
+    if (Engine.dimTimer < Engine.dimLimit) {
+        if (Engine.dimPercent < 1.0) {
+            Engine.dimPercent += 0.05;
+            if (Engine.dimPercent > 1.0)
+                Engine.dimPercent = 1.0;
+        }
+    }
+    else if (Engine.dimPercent > 0.25 && Engine.dimLimit >= 0) {
+        Engine.dimPercent *= 0.9;
+    }
+
+    float dimAmount = Engine.dimMax * Engine.dimPercent;
+
 #if RETRO_SOFTWARE_RENDER
 #if RETRO_USING_SDL2
     SDL_Rect destScreenPos_scaled;
@@ -409,6 +422,10 @@ void FlipScreen()
         SDL_RenderClear(Engine.renderer);
         // copy texture to screen with lerp
         SDL_RenderCopy(Engine.renderer, texTarget, NULL, &destScreenPos_scaled);
+        // Apply dimming
+        SDL_SetRenderDrawColor(Engine.renderer, 0, 0, 0, 0xFF - (dimAmount * 0xFF));
+        if (dimAmount < 1.0)
+            SDL_RenderFillRect(Engine.renderer, NULL);
         // finally present it
         SDL_RenderPresent(Engine.renderer);
         // reset everything just in case
@@ -418,6 +435,10 @@ void FlipScreen()
         SDL_DestroyTexture(texTarget);
     }
     else {
+        // Apply dimming
+        SDL_SetRenderDrawColor(Engine.renderer, 0, 0, 0, 0xFF - (dimAmount * 0xFF));
+        if (dimAmount < 1.0)
+            SDL_RenderFillRect(Engine.renderer, NULL);
         // no change here
         SDL_RenderPresent(Engine.renderer);
     }
@@ -6565,69 +6586,6 @@ void DrawTexturedFaceBlended(void *v, byte sheetID)
 }
 
 #if RETRO_REV01
-void DrawScaledChar(int direction, int XPos, int YPos, int pivotX, int pivotY, int scaleX, int scaleY, int width, int height, int sprX, int sprY,
-                    int sheetID)
-{
-#if RETRO_SOFTWARE_RENDER
-    // Not avaliable in SW Render mode
-#endif
-
-#if RETRO_HARDWARE_RENDER
-    GFXSurface *surface = &gfxSurface[sheetID];
-    if (gfxVertexSize < VERTEX_LIMIT && XPos > -8192 && XPos < 13951 && YPos > -1024 && YPos < 4864) {
-        XPos -= pivotX * scaleX >> 5;
-        scaleX = width * scaleX >> 5;
-        YPos -= pivotY * scaleY >> 5;
-        scaleY = height * scaleY >> 5;
-        if (gfxSurface[sheetID].texStartX > -1 && gfxVertexSize < 4096) {
-            gfxPolyList[gfxVertexSize].x        = XPos;
-            gfxPolyList[gfxVertexSize].y        = YPos;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            gfxPolyList[gfxVertexSize].u        = gfxSurface[sheetID].texStartX + sprX;
-            gfxPolyList[gfxVertexSize].v        = gfxSurface[sheetID].texStartY + sprY;
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = XPos + scaleX;
-            gfxPolyList[gfxVertexSize].y        = YPos;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            gfxPolyList[gfxVertexSize].u        = gfxSurface[sheetID].texStartX + sprX + width;
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = XPos;
-            gfxPolyList[gfxVertexSize].y        = YPos + scaleY;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-            gfxPolyList[gfxVertexSize].v        = gfxSurface[sheetID].texStartY + sprY + height;
-            gfxVertexSize++;
-
-            gfxPolyList[gfxVertexSize].x        = gfxPolyList[gfxVertexSize - 2].x;
-            gfxPolyList[gfxVertexSize].y        = gfxPolyList[gfxVertexSize - 1].y;
-            gfxPolyList[gfxVertexSize].colour.r = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.g = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.b = 0xFF;
-            gfxPolyList[gfxVertexSize].colour.a = 0xFF;
-            gfxPolyList[gfxVertexSize].u        = gfxPolyList[gfxVertexSize - 2].u;
-            gfxPolyList[gfxVertexSize].v        = gfxPolyList[gfxVertexSize - 1].v;
-            gfxVertexSize++;
-
-            gfxIndexSize += 6;
-        }
-    }
-#endif
-}
-#endif
-
-#if RETRO_REV01
 void DrawBitmapText(void *menu, int XPos, int YPos, int scale, int spacing, int rowStart, int rowCount)
 {
     TextMenu *tMenu = (TextMenu *)menu;
@@ -6710,7 +6668,7 @@ void DrawTextMenu(void *menu, int XPos, int YPos)
     if (tMenu->selectionCount == 3) {
         tMenu->selection2 = -1;
         for (int i = 0; i < tMenu->selection1 + 1; ++i) {
-            if (tMenu->entryHighlight[i] == 1) {
+            if (tMenu->entryHighlight[i]) {
                 tMenu->selection2 = i;
             }
         }
