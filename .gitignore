@@ -17,8 +17,10 @@ CMakeCache.txt
 
 # Build results
 [Dd]ebug/
+[Dd]ebug_HW/
 [Dd]ebugPublic/
 [Rr]elease/
+[Rr]elease_HW/
 [Rr]eleases/
 [Bb]uild/
 x64/
@@ -254,10 +256,12 @@ Ignored/
 
 # Compiled object files
 objects/
-Sonic12Decomp/SData.bin
-Sonic12Decomp/settings.ini
-Sonic12Decomp/Sonic12Decomp.vcxproj
+RSDKv4/SData.bin
+RSDKv4/settings.ini
+RSDKv4/RSDKv4.vcxproj
 *.vcxproj
 *.vcxproj
-Sonic12Decomp/Sonic12Decomp.vcxproj
-Sonic12Decomp/UData.bin
+RSDKv4/UData.bin
+RSDKv4/Data
+RSDKv4/Scripts
+RSDKv4/log.txt

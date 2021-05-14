@@ -419,6 +419,7 @@ const FunctionInfo functions[] = {
     FunctionInfo("AddMenuEntry", 3),
     FunctionInfo("EditMenuEntry", 4),
     FunctionInfo("LoadStage", 0),
+    FunctionInfo("LoadTransition",0),
     FunctionInfo("DrawRect", 8),
     FunctionInfo("ResetObjectEntity", 5),
     FunctionInfo("BoxCollisionTest", 11),
@@ -957,6 +958,7 @@ enum ScrFunc {
     FUNC_ADDMENUENTRY,
     FUNC_EDITMENUENTRY,
     FUNC_LOADSTAGE,
+    FUNC_LOADTRANSITION,
     FUNC_DRAWRECT,
     FUNC_RESETOBJECTENTITY,
     FUNC_BOXCOLLISIONTEST,
@@ -3940,6 +3942,10 @@ void ProcessScript(int scriptCodePtr, int jumpTablePtr, byte scriptEvent)
                 menu->entryHighlight[scriptEng.operands[2]] = scriptEng.operands[3];
                 break;
             }
+            case FUNC_LOADTRANSITION:
+                printf("LoadTransition");
+                stageMode = STAGEMODE_TRANSITION;
+                break;
             case FUNC_LOADSTAGE:
                 opcodeSize = 0;
                 stageMode  = STAGEMODE_LOAD;

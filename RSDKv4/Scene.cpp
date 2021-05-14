@@ -124,6 +124,8 @@ void ProcessStage(void)
     switch (stageMode) {
         case STAGEMODE_LOAD: // Startup
             fadeMode = 0;
+        case STAGEMODE_TRANSITION:
+
             SetActivePalette(0, 0, 256);
 
             cameraEnabled = 1;

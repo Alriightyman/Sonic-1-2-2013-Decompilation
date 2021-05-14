@@ -47,7 +47,8 @@ enum StageModes {
     STAGEMODE_STEPOVER        = 5,
     STAGEMODE_PAUSED_STEPOVER = 6,
     STAGEMODE_FROZEN_PAUSED   = 7,
-    STAGEMODE_2P_PAUSED       = 8
+    STAGEMODE_2P_PAUSED       = 8,
+    STAGEMODE_TRANSITION      = 9,
 };
 
 enum TileInfo {

@@ -7,3 +7,6 @@
 [submodule "dependencies/windows/libvorbis"]
 	path = dependencies/windows/libvorbis
 	url = https://gitlab.xiph.org/xiph/vorbis.git
+[submodule "dependencies/windows/glew"]
+	path = dependencies/windows/glew
+	url = https://github.com/nigels-com/glew.git
